@@ -129,6 +129,9 @@ footer{border-top:1px solid var(--line);padding:30px 0 48px;color:#667085;font-s
       button.title = "Download de nieuwste AI Interviews APK";
       status.textContent = release.tag_name ? "Nieuwste versie · " + release.tag_name : "Nieuwste versie";
       note.textContent = "De download verwijst automatisch naar de nieuwste gepubliceerde Android-versie.";
+      if (new URLSearchParams(window.location.search).get("download") === "1") {
+        window.location.replace(asset.browser_download_url);
+      }
     })
     .catch(() => {
       button.href = "#";
