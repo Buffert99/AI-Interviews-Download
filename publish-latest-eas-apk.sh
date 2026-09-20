@@ -3,6 +3,9 @@ set -euo pipefail
 
 DOWNLOAD_REPO="Buffert99/AI-Interviews-Download"
 VERSION="${1:-$(node -p "require('./package.json').version" 2>/dev/null || date +%Y.%m.%d.%H%M)}"
+REQUIRED="${AI_INTERVIEWS_UPDATE_REQUIRED:-false}"
+MINIMUM_VERSION="${AI_INTERVIEWS_MINIMUM_VERSION:-$VERSION}"
+NOTES="${AI_INTERVIEWS_RELEASE_NOTES:-Nieuwe versie van AI Interviews.}"
 
 command -v gh >/dev/null || { echo "FOUT: GitHub CLI (gh) ontbreekt."; exit 1; }
 command -v node >/dev/null || { echo "FOUT: Node.js ontbreekt."; exit 1; }
@@ -28,13 +31,11 @@ if [[ -z "$APK_URL" ]]; then
 fi
 
 echo "APK gevonden. Publiceer AI Interviews $VERSION..."
-gh workflow run publish-apk.yml \
-  --repo "$DOWNLOAD_REPO" \
-  --ref main \
-  -f "apk_url=$APK_URL" \
-  -f "version=$VERSION"
+echo "Verplicht: $REQUIRED · minimumversie: $MINIMUM_VERSION"
+
+gh workflow run publish-apk.yml   --repo "$DOWNLOAD_REPO"   --ref main   -f "apk_url=$APK_URL"   -f "version=$VERSION"   -f "required=$REQUIRED"   -f "minimum_version=$MINIMUM_VERSION"   -f "notes=$NOTES"
 
 echo
 echo "OK: publicatie is gestart."
 echo "Controleer: https://github.com/$DOWNLOAD_REPO/actions"
-echo "Na afronding activeert https://download.airecruiterapp.nl automatisch de nieuwste APK."
+echo "Na afronding gebruikt de app automatisch update.json en de nieuwste APK."
