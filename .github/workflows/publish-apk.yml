@@ -1,0 +1,42 @@
+name: Publish Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: "Directe EAS/APK download-URL"
+        required: true
+        type: string
+      version:
+        description: "Versie, bijvoorbeeld 1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK
+        env:
+          APK_URL: ${{ inputs.apk_url }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output AI-Interviews.apk "$APK_URL"
+          test -s AI-Interviews.apk
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" AI-Interviews.apk --clobber
+          else
+            gh release create "$TAG" AI-Interviews.apk               --title "AI Interviews $VERSION"               --notes "Android-installatiebestand voor AI Interviews."
+          fi
