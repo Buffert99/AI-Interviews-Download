@@ -8,8 +8,23 @@ on:
         required: true
         type: string
       version:
-        description: "Versie, bijvoorbeeld 1.0.0"
+        description: "Versie, bijvoorbeeld 1.0.1"
         required: true
+        type: string
+      required:
+        description: "Moet deze native update verplicht worden?"
+        required: false
+        default: false
+        type: boolean
+      minimum_version:
+        description: "Oudste toegestane versie; leeg = huidige releaseversie"
+        required: false
+        default: ""
+        type: string
+      notes:
+        description: "Korte release-opmerking"
+        required: false
+        default: "Nieuwe versie van AI Interviews."
         type: string
 
 permissions:
@@ -19,6 +34,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout downloadsite
+        uses: actions/checkout@v4
+
       - name: Download APK
         env:
           APK_URL: ${{ inputs.apk_url }}
@@ -32,11 +50,46 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           VERSION: ${{ inputs.version }}
+          NOTES: ${{ inputs.notes }}
         run: |
           set -euo pipefail
           TAG="v$VERSION"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" AI-Interviews.apk --clobber
           else
-            gh release create "$TAG" AI-Interviews.apk               --title "AI Interviews $VERSION"               --notes "Android-installatiebestand voor AI Interviews."
+            gh release create "$TAG" AI-Interviews.apk               --title "AI Interviews $VERSION"               --notes "$NOTES"
+          fi
+
+      - name: Update native update manifest
+        env:
+          VERSION: ${{ inputs.version }}
+          REQUIRED: ${{ inputs.required }}
+          MINIMUM_VERSION: ${{ inputs.minimum_version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          set -euo pipefail
+          MINIMUM_VERSION="${MINIMUM_VERSION:-$VERSION}"
+          node <<'NODE'
+          const fs = require("fs");
+          const manifest = {
+            schemaVersion: 1,
+            version: process.env.VERSION,
+            minimumVersion: process.env.MINIMUM_VERSION || process.env.VERSION,
+            required: String(process.env.REQUIRED).toLowerCase() === "true",
+            apkUrl: "https://github.com/Buffert99/AI-Interviews-Download/releases/latest/download/AI-Interviews.apk",
+            downloadPageUrl: "https://download.airecruiterapp.nl",
+            notes: process.env.NOTES || "Nieuwe versie van AI Interviews.",
+            publishedAt: new Date().toISOString()
+          };
+          fs.writeFileSync("update.json", JSON.stringify(manifest, null, 2) + "\n");
+          NODE
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          if git diff --cached --quiet; then
+            echo "update.json is ongewijzigd."
+          else
+            git commit -m "Publish mobile update manifest v$VERSION"
+            git push origin HEAD:main
           fi
