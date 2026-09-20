@@ -57,7 +57,9 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" AI-Interviews.apk --clobber
           else
-            gh release create "$TAG" AI-Interviews.apk               --title "AI Interviews $VERSION"               --notes "$NOTES"
+            gh release create "$TAG" AI-Interviews.apk \
+              --title "AI Interviews $VERSION" \
+              --notes "$NOTES"
           fi
 
       - name: Update native update manifest
@@ -71,8 +73,13 @@ jobs:
           node <<'NODE'
           const fs = require("fs");
           let previous = {};
-          try { previous = JSON.parse(fs.readFileSync("update.json", "utf8")); } catch {}
-          const minimumVersion =\n            String(process.env.MINIMUM_VERSION || "").trim() ||\n            String(previous.minimumVersion || "").trim() ||\n            "0.0.0";
+          try {
+            previous = JSON.parse(fs.readFileSync("update.json", "utf8"));
+          } catch {}
+          const minimumVersion =
+            String(process.env.MINIMUM_VERSION || "").trim() ||
+            String(previous.minimumVersion || "").trim() ||
+            "0.0.0";
           const manifest = {
             schemaVersion: 1,
             version: process.env.VERSION,
