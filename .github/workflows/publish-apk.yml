@@ -17,7 +17,7 @@ on:
         default: false
         type: boolean
       minimum_version:
-        description: "Oudste toegestane versie; leeg = huidige releaseversie"
+        description: "Oudste toegestane versie; leeg = vorige minimumversie behouden"
         required: false
         default: ""
         type: string
@@ -68,13 +68,15 @@ jobs:
           NOTES: ${{ inputs.notes }}
         run: |
           set -euo pipefail
-          MINIMUM_VERSION="${MINIMUM_VERSION:-$VERSION}"
           node <<'NODE'
           const fs = require("fs");
+          let previous = {};
+          try { previous = JSON.parse(fs.readFileSync("update.json", "utf8")); } catch {}
+          const minimumVersion =\n            String(process.env.MINIMUM_VERSION || "").trim() ||\n            String(previous.minimumVersion || "").trim() ||\n            "0.0.0";
           const manifest = {
             schemaVersion: 1,
             version: process.env.VERSION,
-            minimumVersion: process.env.MINIMUM_VERSION || process.env.VERSION,
+            minimumVersion,
             required: String(process.env.REQUIRED).toLowerCase() === "true",
             apkUrl: "https://github.com/Buffert99/AI-Interviews-Download/releases/latest/download/AI-Interviews.apk",
             downloadPageUrl: "https://download.airecruiterapp.nl",
