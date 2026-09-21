@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minimumVersion": "1.0.0",
   "required": false,
   "apkUrl": "https://github.com/Buffert99/AI-Interviews-Download/releases/latest/download/AI-Interviews.apk",
   "downloadPageUrl": "https://download.airecruiterapp.nl",
-  "notes": "Eerste publieke Android-release van AI Interviews.",
-  "publishedAt": "2026-09-20T20:26:14.328Z"
+  "notes": "Nieuwe versie van AI Interviews.",
+  "publishedAt": "2026-09-21T06:35:56.426Z"
 }
